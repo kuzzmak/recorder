@@ -11,7 +11,11 @@ option(BUILD_TESTING "Build unit tests" ON)
 # (see `make test-asan` / `make test-tsan`).
 set(SANITIZE "" CACHE STRING "address|thread|undefined (empty = none)")
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets DBus Test)
+set(RECORDER_QT_COMPONENTS Core Gui Widgets DBus)
+if(BUILD_TESTING)
+    list(APPEND RECORDER_QT_COMPONENTS Test)
+endif()
+find_package(Qt6 REQUIRED COMPONENTS ${RECORDER_QT_COMPONENTS})
 qt_standard_project_setup(REQUIRES 6.4)
 
 # System audio libraries: libpulse must match the running sound server, and
@@ -86,7 +90,16 @@ qt_add_executable(recorder
 set_target_properties(recorder PROPERTIES AUTOMOC ON)
 target_link_libraries(recorder PRIVATE recorder_core Qt6::Widgets)
 
-install(TARGETS recorder RUNTIME DESTINATION bin)
+# Version string for --version / QCoreApplication::applicationVersion().
+# Only the numeric upstream version lives here; the packaging revision
+# (+ppaN) is debian/changelog's business.
+target_compile_definitions(recorder PRIVATE RECORDER_VERSION="${PROJECT_VERSION}")
+
+include(GNUInstallDirs)
+install(TARGETS recorder RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES data/recorder.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+# Pre-rendered copies of TrayIcon::render(); regenerate with `make icons`.
+install(DIRECTORY data/icons/hicolor DESTINATION ${CMAKE_INSTALL_DATADIR}/icons)
 
 # ----------------------------------------------------------------------------
 # Tests

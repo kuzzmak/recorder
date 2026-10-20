@@ -23,6 +23,8 @@
 #include <QtDebug>
 
 #include <csignal>
+#include <cstdio>
+#include <cstring>
 #include <unistd.h>
 
 namespace {
@@ -80,6 +82,14 @@ void sweepPartFiles(const QString &dir)
 // --- Install the themed tray icons into the user's hicolor theme ------------
 bool installIcons()
 {
+    // Packaged install: /usr/share/icons/hicolor already has both names (and
+    // the hicolor-icon-theme trigger refreshed its cache), so write nothing.
+    // Caveat: old per-user copies in ~/.local/share/icons also satisfy this
+    // check and shadow the system ones; the pixels are identical today.
+    if (QIcon::hasThemeIcon(QLatin1String(TrayIcon::kIdleName))
+        && QIcon::hasThemeIcon(QLatin1String(TrayIcon::kRecordingName)))
+        return true;
+
     const QString iconsRoot =
         QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + QStringLiteral("/icons");
     if (!TrayIcon::installToTheme(iconsRoot))
@@ -97,9 +107,20 @@ bool installIcons()
 
 int main(int argc, char *argv[])
 {
+    // Before QApplication: without a display Qt aborts in the constructor,
+    // and --version must work from scripts, package tooling and headless
+    // builders.
+    for (int i = 1; i < argc; ++i) {
+        if (std::strcmp(argv[i], "--version") == 0) {
+            std::printf("recorder %s\n", RECORDER_VERSION);
+            return 0;
+        }
+    }
+
     QApplication app(argc, argv);
     QApplication::setOrganizationName(QStringLiteral("Recorder"));
     QApplication::setApplicationName(QStringLiteral("Recorder"));
+    QApplication::setApplicationVersion(QStringLiteral(RECORDER_VERSION));
     QApplication::setQuitOnLastWindowClosed(false);  // tray app: outlive windows
 
     const QStringList args = app.arguments();
@@ -112,6 +133,12 @@ int main(int argc, char *argv[])
         AutoStart autoStart;
         return autoStart.sync(settings.launchAtLogin()) ? 0 : 1;
     }
+
+    // Dev tool: write the hicolor PNGs that the package installs
+    // (`make icons` runs this offscreen into data/icons).
+    const int exportIdx = args.indexOf(QStringLiteral("--export-icons"));
+    if (exportIdx >= 0 && exportIdx + 1 < args.size())
+        return TrayIcon::installToTheme(args.at(exportIdx + 1)) ? 0 : 1;
 
     const QString configDir = QFileInfo(Settings::defaultFilePath()).absolutePath();
     QDir().mkpath(configDir);

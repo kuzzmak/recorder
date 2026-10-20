@@ -42,3 +42,4 @@ ui_*.h
 # ---- OS cruft ----
 .DS_Store
 Thumbs.db
+dist/

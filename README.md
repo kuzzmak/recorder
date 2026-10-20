@@ -7,7 +7,27 @@ participants are captured too), writes Ogg/Opus (or WAV), and starts at login.
 
 Transcription itself is out of scope; this only produces the files.
 
-## Prerequisites (Ubuntu 24.04)
+## Install (Ubuntu 24.04)
+
+```
+sudo add-apt-repository ppa:tonkec/recorder
+sudo apt update
+sudo apt install recorder
+```
+
+This installs `/usr/bin/recorder`, a launcher in the applications menu and the
+tray icons. Launch *Recorder* once from Activities; it then writes its own
+per-user autostart entry (see below). `sudo apt remove recorder` removes the
+program but, like any package, leaves per-user files alone:
+`~/.config/Recorder/` (settings, lock file), `~/.config/autostart/recorder.desktop`
+and any `~/.local/share/icons/hicolor/*/apps/recorder*.png` written by an
+earlier source install. Recordings in `~/Recordings` are never touched.
+
+If you previously ran `make install`, remove that copy first (`make uninstall`):
+the autostart entry keeps pointing at `~/.local/bin/recorder` as long as that
+binary exists.
+
+## Building from source (Ubuntu 24.04)
 
 ```
 make deps
@@ -29,8 +49,24 @@ extension, enabled by default on Ubuntu.
 | `make test-asan` / `make test-tsan` | same under AddressSanitizer / ThreadSanitizer, each in its own build dir |
 | `make run` | stop any running instance, launch `build/recorder` without touching the autostart entry |
 | `make install` | install to `~/.local/bin`, write the autostart entry for that binary, restart the app |
-| `make uninstall` | stop it and remove binary, autostart entry and icons |
+| `make uninstall` | stop it and remove binary, launcher, autostart entry and icons |
 | `make stop` | ask the running instance to quit (it finalizes the file first) |
+| `make icons` | regenerate `data/icons/` from `TrayIcon::render` (commit the result) |
+| `make deb` | build an unsigned `.deb` into `dist/` from the last commit and run lintian |
+| `make ppa` | build a signed source package and upload it to the PPA (`SERIES=noble` by default) |
+
+`recorder --version` prints the version and works without a display.
+
+### Packaging notes
+
+The Debian packaging lives in `debian/` (source format `3.0 (native)`). Versions
+are `<upstream>+ppaN` in `debian/changelog`; `make export` appends `~<series>1`
+so the local `.deb` and the PPA build carry the identical version. A
+packaging-only fix bumps only the changelog (`dch -v 0.1.0+ppa2`); a new
+upstream version changes both `project(Recorder VERSION ...)` in
+`CMakeLists.txt` and the changelog (`dch -v 0.1.1+ppa1`). Launchpad never
+accepts the same version twice. Build and upload only from a clean commit:
+`make export` uses `git archive HEAD`.
 
 `recorder --sync-autostart` writes or removes `~/.config/autostart/recorder.desktop`
 according to the *Launch at login* setting and exits; `make install` uses it so

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.5
+Name=Recorder
+GenericName=Meeting Audio Recorder
+Comment=Record meeting audio from the microphone and system output
+Exec=recorder
+Icon=recorder
+Terminal=false
+StartupNotify=false
+Categories=AudioVideo;Audio;Recorder;Qt;
+Keywords=audio;record;meeting;microphone;opus;transcription;

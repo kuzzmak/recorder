@@ -1,0 +1,11 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@ --buildsystem=cmake+ninja
+
+# BUILD_TESTING defaults to ON; the tests set QT_QPA_PLATFORM=offscreen
+# themselves and the live PulseAudio test skips without a sound server.
+# DEB_BUILD_OPTIONS=nocheck skips dh_auto_test entirely.
+override_dh_auto_configure:
+	dh_auto_configure -- -DBUILD_TESTING=ON

@@ -1,0 +1,31 @@
+Source: recorder
+Section: sound
+Priority: optional
+Maintainer: kuzminski.antonio <kuzminski.antonio@gmail.com>
+Rules-Requires-Root: no
+Build-Depends: debhelper-compat (= 13),
+               cmake (>= 3.21),
+               ninja-build,
+               pkgconf,
+               qt6-base-dev (>= 6.4),
+               qt6-base-dev-tools,
+               libpulse-dev,
+               libopusenc-dev
+Standards-Version: 4.6.2
+Homepage: https://launchpad.net/~tonkec/+archive/ubuntu/recorder
+
+Package: recorder
+Architecture: any
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         hicolor-icon-theme
+Recommends: pipewire-pulse | pulseaudio,
+            gnome-shell-extension-appindicator
+Suggests: libgtk-3-bin,
+          qt6-wayland
+Description: tray application that records meeting audio to Opus or WAV
+ Recorder sits in the system tray (StatusNotifier) and records the
+ microphone and, optionally, the system audio output on demand. Files are
+ written as mono 48 kHz Ogg/Opus (or WAV) into a folder, ready for a
+ speech-to-text model. It can start at login and keeps both audio streams
+ aligned on the microphone's timeline.
