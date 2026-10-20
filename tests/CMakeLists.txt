@@ -1,0 +1,22 @@
+# Each tst_*.cpp is a self-contained QtTest executable linked against recorder_core.
+function(recorder_add_test name)
+    qt_add_executable(${name} ${name}.cpp ${ARGN})
+    set_target_properties(${name} PROPERTIES AUTOMOC ON)
+    target_link_libraries(${name} PRIVATE recorder_core Qt6::Test)
+    add_test(NAME ${name} COMMAND ${name})
+    set_tests_properties(${name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endfunction()
+
+recorder_add_test(tst_audiomixer)
+recorder_add_test(tst_samplequeue)
+recorder_add_test(tst_streamclock)
+recorder_add_test(tst_streamaligner)
+recorder_add_test(tst_wavwriter)
+recorder_add_test(tst_opuswriter)
+recorder_add_test(tst_outputpath)
+recorder_add_test(tst_settings)
+recorder_add_test(tst_autostart)
+recorder_add_test(tst_encoderthread)
+recorder_add_test(tst_recorder)
+# Live test: skips itself when no sound server is reachable.
+recorder_add_test(tst_pulsecapture)

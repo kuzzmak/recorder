@@ -1,0 +1,11 @@
+# libpulse is not TSan-instrumented: its mainloop mutex is created on the
+# caller thread and first locked on the "threaded-ml" thread without any
+# synchronisation TSan can see. Nothing of ours is in that report.
+race:pa_mutex_lock
+
+# QThread's own teardown: QThreadPrivate::finish() flips `finished` and
+# wakes `thread_done` under the QThread QMutex, which lives in uninstrumented
+# libQt6Core (futex + plain atomics TSan cannot see). Deleting the finished
+# QThread later (deleteLater after finished()/wait()) then looks unordered
+# against that wakeAll(). Nothing of ours uses a QWaitCondition.
+race:QWaitCondition::~QWaitCondition

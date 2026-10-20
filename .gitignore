@@ -1,0 +1,44 @@
+# ---- Build output ----
+/build/
+build*/
+out/
+_deps/
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+
+# ---- CMake ----
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+CMakeUserPresets.json
+compile_commands.json
+Testing/
+
+# ---- Qt / QML generated ----
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+*.qmlc
+*.jsc
+.qmake.stash
+.qmlls.ini
+*_qmltyperegistrations.cpp
+
+# ---- Qt Creator ----
+*.pro.user
+*.qbs.user
+
+# ---- Editors / IDEs ----
+.vscode/
+.idea/
+*.swp
+*~
+
+# ---- OS cruft ----
+.DS_Store
+Thumbs.db
