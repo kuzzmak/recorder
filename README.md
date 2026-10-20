@@ -52,21 +52,44 @@ extension, enabled by default on Ubuntu.
 | `make uninstall` | stop it and remove binary, launcher, autostart entry and icons |
 | `make stop` | ask the running instance to quit (it finalizes the file first) |
 | `make icons` | regenerate `data/icons/` from `TrayIcon::render` (commit the result) |
+| `make bump` | next packaging revision (`+ppaN`) in `debian/changelog`; `MSG="..."` sets the entry text |
+| `make release VERSION=x.y.z` | new upstream version in `CMakeLists.txt` and `debian/changelog` |
 | `make deb` | build an unsigned `.deb` into `dist/` from the last commit and run lintian |
 | `make ppa` | build a signed source package and upload it to the PPA (`SERIES=noble` by default) |
 
 `recorder --version` prints the version and works without a display.
 
-### Packaging notes
+### Publishing a new version
 
-The Debian packaging lives in `debian/` (source format `3.0 (native)`). Versions
-are `<upstream>+ppaN` in `debian/changelog`; `make export` appends `~<series>1`
-so the local `.deb` and the PPA build carry the identical version. A
-packaging-only fix bumps only the changelog (`dch -v 0.1.0+ppa2`); a new
-upstream version changes both `project(Recorder VERSION ...)` in
-`CMakeLists.txt` and the changelog (`dch -v 0.1.1+ppa1`). Launchpad never
-accepts the same version twice. Build and upload only from a clean commit:
-`make export` uses `git archive HEAD`.
+Versions never change on their own. Launchpad rejects a version it has already
+seen, so every upload needs a bump first. Pick one:
+
+```
+# A fix or small change: next packaging revision, CMake version unchanged
+make bump MSG="Fix alignment when the monitor stalls"       # 0.1.0+ppa1 -> 0.1.0+ppa2
+
+# A new upstream version: updates CMakeLists.txt and debian/changelog together
+make release VERSION=0.1.1 MSG="Add WAV output"             # -> 0.1.1+ppa1
+```
+
+Then commit and upload:
+
+```
+git commit -am "Release 0.1.0+ppa2"
+make ppa
+```
+
+Launchpad builds the package within minutes to an hour; users get it on their
+next `sudo apt upgrade`. Leave `MSG` out and `dch` opens an editor for the
+changelog text.
+
+How it fits together: the committed version is `<upstream>+ppaN` in
+`debian/changelog`, and `project(Recorder VERSION x.y.z)` in `CMakeLists.txt`
+holds only the numeric part (CMake rejects `+ppaN`). `make export` refuses to
+build if the two disagree, and appends `~<series>1` (e.g. `0.1.0+ppa2~noble1`)
+so the local `.deb` from `make deb` and the PPA build carry the identical
+version. Build and upload only from a clean commit: `make export` uses
+`git archive HEAD`, so uncommitted edits are silently left out.
 
 `recorder --sync-autostart` writes or removes `~/.config/autostart/recorder.desktop`
 according to the *Launch at login* setting and exits; `make install` uses it so

@@ -29,6 +29,10 @@ CMAKE_VER  = ${shell sed -n 's/^project(Recorder VERSION \([0-9.]*\).*/\1/p' CMa
 # Series-specific version used by both the local .deb and the PPA upload,
 # e.g. 0.1.0+ppa1~noble1
 FULL_VER   = $(PKG_VER)~$(SERIES)1
+# Packaging revision N from <upstream>+ppaN (for `make bump`)
+PPA_REV    = $(lastword $(subst +ppa, ,$(PKG_VER)))
+# Changelog text for `make bump` / `make release`; dch opens an editor if empty
+MSG       ?=
 SRC_DIR    = $(DIST_DIR)/recorder-$(FULL_VER)
 CHANGES    = $(DIST_DIR)/recorder_$(FULL_VER)
 
@@ -127,6 +131,20 @@ distclean:
 # ----------------------------------------------------------------------------
 # Packaging: Debian package and Launchpad PPA
 # ----------------------------------------------------------------------------
+
+## bump: next packaging revision (+ppaN) in debian/changelog, e.g. make bump MSG="Fix X"
+.PHONY: bump
+bump:
+	dch -v "$(CMAKE_VER)+ppa$$(( $(PPA_REV) + 1 ))" -D $(SERIES) --force-distribution "$${MSG:-Packaging update.}"
+	@head -1 debian/changelog
+
+## release: new upstream version in CMakeLists.txt and debian/changelog, e.g. make release VERSION=0.1.1 MSG="..."
+.PHONY: release
+release:
+	@test -n "$(VERSION)" || { echo "usage: make release VERSION=x.y.z [MSG=\"...\"]"; exit 1; }
+	sed -i 's/^project(Recorder VERSION [0-9.]*/project(Recorder VERSION $(VERSION)/' CMakeLists.txt
+	dch -v "$(VERSION)+ppa1" -D $(SERIES) --force-distribution "$${MSG:-New upstream release $(VERSION).}"
+	@grep -n '^project(' CMakeLists.txt; head -1 debian/changelog
 
 ## icons: regenerate data/icons from TrayIcon::render (commit the result)
 .PHONY: icons
